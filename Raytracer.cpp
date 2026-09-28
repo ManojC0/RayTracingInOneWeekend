@@ -1,42 +1,22 @@
 ﻿// Raytracer.cpp : Defines the entry point for the application.
 //
-
-#include "Raytracer.h"
-#include "vec3.h"
-#include "colour.h"
-#include "ray.h"
-#include <iostream>
+#include "utilities.h"
+#include "hittable.h"
+#include "hittable_list.h"
+#include "sphere.h"
 
 
-
-double hit_sphere(const point3& centre, double radius, const ray& r) {
-	vec3 co = centre - r.origin();
-	double a = dot(r.direction(), r.direction());
-	double b = dot(-2 * r.direction(), centre - r.origin());
-	double c = dot(co, co) - pow(radius, 2);
-	double discriminant = pow(b, 2) - 4 * a * c;
-	if (discriminant < 0) {
-		return -1.0;
-	}
-	else {
-		// always return the point closest to the camera
-		return (-b - std::sqrt(discriminant)) / (2.0 * a);
+colour ray_colour(const ray& r, const hittable& world) {
+	hit_record rec;
+	if (world.hit(r, 0,infinity, rec)) {
+		return 0.5*(rec.normal + colour(1, 1, 1));
 	}
 
-}
-
-colour ray_colour(const ray& r) {
-	double t = hit_sphere(point3(0, 0, -1), 0.5, r);
-	if (t > 0.0) {
-		//vec3 N = unit_vector(r.at(t) - vec3(0, 0, -1));
-		vec3 N = r.at(t) - vec3(0, 0, -1);
-		return colour(N.x(), N.y(), N.z());
-	}
 	vec3 unit_direction = unit_vector(r.direction());
-
-	auto a = (unit_direction.y());
-	// Linear interpolation of white and blue colours for background
-	return (1.0 - a)*colour(1.0, 1.0, 1.0) + a*colour(0, 0, 1.0);
+	float a = 0.5 * (unit_direction.y()+1);
+	// linear interpolation between white and blue
+	return (1.0 - a) * colour(1.0, 1.0, 1.0) + a * colour(0, 0, 1);
+	
 }
 
 int main(){
@@ -49,6 +29,13 @@ int main(){
 	if (image_height < 1) {
 		image_height = 1;
 	}
+
+	// world
+	hittable_list world;
+
+	world.add(std::make_shared<sphere>(point3(0, 0, -1), 0.5));
+	world.add(std::make_shared<sphere>(point3(0, -100.5, -1), 100));
+
 
 	// Camera
 	auto focal_length = 1.0;
@@ -77,7 +64,7 @@ int main(){
 			auto pixel_centre = pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v);
 			auto ray_direction = pixel_centre - camera_centre;
 			ray r(camera_centre, ray_direction);
-			colour pixel_colour = ray_colour(r);
+			colour pixel_colour = ray_colour(r,world);
 			write_colour(std::cout, pixel_colour);
 		}
 	}

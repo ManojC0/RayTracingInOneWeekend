@@ -2,8 +2,6 @@
 #define COLOUR_H
 
 #include "vec3.h"
-#include <iostream>
-
 using colour = vec3;
 
 void write_colour(std::ostream& out, const colour& pixel_colour) {

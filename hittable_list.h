@@ -1,9 +1,6 @@
 #ifndef HITTABLE_LIST_H
 #define HITTABLE_LIST_H
 
-#include "hittable.h"
-
-#include <memory>
 #include <vector>
 
 class hittable_list : public hittable {
@@ -13,7 +10,7 @@ public:
 	hittable_list(std::shared_ptr<hittable> object) { add(object); }
 
 	void clear() { objects.clear(); }
-	void add(shared_ptr<hittable> object) {
+	void add(std::shared_ptr<hittable> object) {
 		objects.push_back(object);
 	}
 
@@ -22,7 +19,7 @@ public:
 		bool hit_anything = false;
 		double closest_so_far = ray_tmax;
 
-		for (const auto& objects : objects) {
+		for (const auto& object : objects) {
 			if (object->hit(r, ray_tmin, closest_so_far, temp_rec)) {
 				hit_anything = true;
 				closest_so_far = temp_rec.t;
