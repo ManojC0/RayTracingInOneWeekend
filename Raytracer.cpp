@@ -19,6 +19,7 @@ double hit_sphere(const point3& centre, double radius, const ray& r) {
 		return -1.0;
 	}
 	else {
+		// always return the point closest to the camera
 		return (-b - std::sqrt(discriminant)) / (2.0 * a);
 	}
 
@@ -27,7 +28,8 @@ double hit_sphere(const point3& centre, double radius, const ray& r) {
 colour ray_colour(const ray& r) {
 	double t = hit_sphere(point3(0, 0, -1), 0.5, r);
 	if (t > 0.0) {
-		vec3 N = unit_vector(r.at(t) - vec3(0, 0, -1));
+		//vec3 N = unit_vector(r.at(t) - vec3(0, 0, -1));
+		vec3 N = r.at(t) - vec3(0, 0, -1);
 		return colour(N.x(), N.y(), N.z());
 	}
 	vec3 unit_direction = unit_vector(r.direction());
