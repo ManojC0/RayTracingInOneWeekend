@@ -9,6 +9,7 @@ public:
 	// image
 	double aspect_ratio = 1.0; // ratio of image width over height
 	int image_width = 100; // rendered image width in pixel count
+	int samples_per_pixel = 10; // Count of random samples for each pixel
 	void render(const hittable& world) {
 		initialise();
 
@@ -16,11 +17,12 @@ public:
 		for (int j = 0; j < image_height; j++) {
 			std::clog << "\rScanlines remaining: " << (image_height - j) << '\n';
 			for (int i = 0; i < image_width; i++) {
-				auto pixel_centre = pixel00_loc + (i * pixel_delta_u) + (j * pixel_delta_v);
-				auto ray_direction = pixel_centre - centre;
-				ray r(centre, ray_direction);
-				colour pixel_colour = ray_colour(r, world);
-				write_colour(std::cout, pixel_colour);
+				colour pixel_colour(0, 0, 0);
+				for (int sample = 0;sample < samples_per_pixel; sample++) {
+					ray r = get_ray(i, j);
+					pixel_colour += ray_colour(r, world);
+				}
+				write_colour(std::cout, pixel_samples_scale * pixel_colour);
 			}
 		}
 	}
@@ -29,6 +31,7 @@ public:
 private:
 	/* Private camera variables here */
 	int image_height; // rendered image height
+	double pixel_samples_scale;
 	point3 centre; // Camera centre
 	point3 pixel00_loc; // location of pixel (0,0)
 	vec3 pixel_delta_u; // offset to pixel to the right
@@ -37,6 +40,8 @@ private:
 	void initialise() {
 		image_height = int(image_width / aspect_ratio);
 		image_height = (image_height < 1) ? 1 : image_height;
+
+		pixel_samples_scale = 1.0 / samples_per_pixel;
 		centre = point3(0, 0, 0);
 
 		// Determine viewport dimensions
@@ -71,6 +76,26 @@ private:
 		return (1.0 - a) * colour(1.0, 1.0, 1.0) + a * colour(0, 0, 1);
 
 	}
+	ray get_ray(int i, int j) const {
+		// construct a camera ray from origin to a random sampled point 
+		// around the pixel location (i,j)
+
+		auto offset = sample_square();
+		auto pixel_sample = pixel00_loc
+			+ ((i + offset.x()) * pixel_delta_u)
+			+ ((j + offset.y()) * pixel_delta_v);
+		auto ray_origin = centre;
+		auto ray_direction = pixel_sample - ray_origin;
+		return ray(ray_origin, ray_direction);
+	}
+
+	vec3 sample_square() const {
+		// returns the vector to a random point in
+		// [-0.5,-0.5] to [0.5,0.5] unit square
+		return vec3(random_double() - 0.5, random_double() - 0.5, 0);
+	}
 };
+
+
 
 #endif
