@@ -5,11 +5,12 @@
 
 class camera {
 public:
-	/* Public camera parameters here*/
+	/* Public camera parameters here */
 	// image
 	double aspect_ratio = 1.0; // ratio of image width over height
 	int image_width = 100; // rendered image width in pixel count
-	int samples_per_pixel = 10; // Count of random samples for each pixel
+	int samples_per_pixel = 100; // Count of random samples for each pixel
+	int max_depth = 10;
 	void render(const hittable& world) {
 		initialise();
 
@@ -20,7 +21,7 @@ public:
 				colour pixel_colour(0, 0, 0);
 				for (int sample = 0;sample < samples_per_pixel; sample++) {
 					ray r = get_ray(i, j);
-					pixel_colour += ray_colour(r, world);
+					pixel_colour += ray_colour(r, max_depth, world);
 				}
 				write_colour(std::cout, pixel_samples_scale * pixel_colour);
 			}
@@ -64,16 +65,24 @@ private:
 
 	}
 
-	colour ray_colour(const ray& r, const hittable& world) const {
+	colour ray_colour(const ray& r, int depth, const hittable& world) const {
+		// if we've exceeded the ray bounce limit, no more light gathered
+		if (depth <= 0)
+			return colour(0, 0, 0);
+		
 		hit_record rec;
-		if (world.hit(r, interval(0, infinity), rec)) {
-			return rec.normal; // 0.5 * (rec.normal + colour(1, 1, 1));
+		// prevents generated light rays from under the surface from intersecting the surface
+		if (world.hit(r, interval(0.001, infinity), rec)) {
+			vec3 direction = random_on_hemisphere(rec.normal);
+			return 0.5 * (ray_colour(ray(rec.p, direction), depth-1, world));
+			//return rec.normal; // 0.5 * (rec.normal + colour(1, 1, 1));
+			//return 0.5 * (rec.normal + colour(1, 1, 1));
 		}
 
 		vec3 unit_direction = unit_vector(r.direction());
-		double a = 0.5 * (unit_direction.y() + 1);
+		double a = 0.5 * (unit_direction.y() + 1.0);
 		// linear interpolation between white and blue
-		return (1.0 - a) * colour(1.0, 1.0, 1.0) + a * colour(0, 0, 1);
+		return (1.0 - a) * colour(1.0, 1.0, 1.0) + a * colour(0.5, 0.7, 1);
 
 	}
 	ray get_ray(int i, int j) const {
@@ -92,6 +101,7 @@ private:
 	vec3 sample_square() const {
 		// returns the vector to a random point in
 		// [-0.5,-0.5] to [0.5,0.5] unit square
+		//return vec3(random_double() - 0.5, random_double() - 0.5, 0);
 		return vec3(random_double() - 0.5, random_double() - 0.5, 0);
 	}
 };
