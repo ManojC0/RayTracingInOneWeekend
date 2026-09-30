@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #include "hittable.h"
+#include "material.h"
 
 class camera {
 public:
@@ -73,10 +74,14 @@ private:
 		hit_record rec;
 		// prevents generated light rays from under the surface from intersecting the surface
 		if (world.hit(r, interval(0.001, infinity), rec)) {
-			vec3 direction = rec.normal + random_on_hemisphere(rec.normal);
-
+			ray scattered;
+			colour attenuation;
+			if (rec.mat->scatter(r, rec, attenuation, scattered))
+				return attenuation * ray_colour(scattered, depth - 1, world);
+			return colour(0, 0, 0);
+			//vec3 direction = rec.normal + random_on_hemisphere(rec.normal);
 			// 0.5 here is the reflectance and can be modified between 0 <= reflectance <= 1
-			return 0.5 * (ray_colour(ray(rec.p, direction), depth-1, world));
+			//return 0.5 * (ray_colour(ray(rec.p, direction), depth-1, world));
 			//return rec.normal; // 0.5 * (rec.normal + colour(1, 1, 1));
 			//return 0.5 * (rec.normal + colour(1, 1, 1));
 		}
