@@ -17,20 +17,23 @@ public:
 
 class metal : public material {
 public:
-	metal(const colour& albedo) : albedo(albedo){}
+	metal(const colour& albedo, double fuzz) : albedo(albedo), fuzz(fuzz < 1 ? fuzz : 1){}
 
 	bool scatter(const ray& r_in, const hit_record& rec, colour& attentuation, ray& scattered)
 		const override {
-		auto reflection = reflect(r_in.direction(), rec.normal);
-
-		scattered = ray(rec.p, reflection);
+		vec3 reflected = reflect(r_in.direction(), rec.normal);
+		reflected = unit_vector(reflected) + (fuzz * random_unit_vector());
+		scattered = ray(rec.p, reflected);
 		attentuation = albedo;
-		return true;
+		// if the scattered direction is below the surface then the
+		// surface absorbs the ray
+		return (dot(scattered.direction(), rec.normal) > 0);
 	}
 
 
 private:
 	colour albedo;
+	double fuzz;
 };
 
 class lambertian : public material {
