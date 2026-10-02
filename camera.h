@@ -12,6 +12,8 @@ public:
 	int image_width = 100; // rendered image width in pixel count
 	int samples_per_pixel = 100; // Count of random samples for each pixel
 	int max_depth = 10;
+
+	double vfov = 90; // Vertical view angle (field of view)
 	void render(const hittable& world) {
 		initialise();
 
@@ -48,7 +50,10 @@ private:
 
 		// Determine viewport dimensions
 		auto focal_length = 1.0;
-		auto viewport_height = 2.0;
+		auto theta = degrees_to_radians(vfov);
+		auto h = std::tan(theta / 2);
+		auto viewport_height = 2 * h * focal_length;
+		//		auto viewport_height = 2.0;
 		auto viewport_width = viewport_height * (double(image_width) / image_height);
 
 		// Calculate vectors for horizontal and down the vertical vp edges
